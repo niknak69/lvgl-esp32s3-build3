@@ -1,0 +1,37 @@
+name: Build lvgl_micropython for ESP32-S3 (Docker)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Use the official ESP-IDF image so toolchains are preinstalled
+    container:
+      image: espressif/idf:release-v5.2
+    steps:
+      - name: Checkout lvgl_micropython (kdschlosser fork) with submodules
+        uses: actions/checkout@v4
+        with:
+          repository: lvgl-micropython/lvgl_micropython
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Show IDF version
+        shell: bash
+        run: |
+          source /opt/esp/idf/export.sh
+          idf.py --version || true
+
+      - name: Build firmware (ESP32_GENERIC_S3)
+        shell: bash
+        run: |
+          set -e
+          source /opt/esp/idf/export.sh
+          python3 make.py esp32 BOARD=ESP32_GENERIC_S3
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: ports/esp32/build-ESP32_GENERIC_S3/firmware.bin
